@@ -273,7 +273,7 @@ namespace Falcor
             }
         }
 
-        bool createCameras(ImporterData& data, ImportMode importMode)
+        bool createCameras(ImporterData& data, ImportMode importMode, float scale)
         {
             if (data.pScene->mNumCameras == 0) return true;
 
@@ -291,7 +291,7 @@ namespace Falcor
                 float focalLength = importMode == ImportMode::GLTF2 ? fovYToFocalLength(pAiCamera->mHorizontalFOV / aspectRatio, pCamera->getFrameHeight()) : 35.f;
                 pCamera->setFocalLength(focalLength);
                 pCamera->setAspectRatio(aspectRatio);
-                pCamera->setDepthRange(pAiCamera->mClipPlaneNear, pAiCamera->mClipPlaneFar);
+                pCamera->setDepthRange(pAiCamera->mClipPlaneNear * scale, pAiCamera->mClipPlaneFar * scale);
 
                 uint32_t nodeID = data.getFalcorNodeID(pAiCamera->mName.C_Str(), 0);
 
@@ -1013,6 +1013,7 @@ namespace Falcor
         assimpFlags &= ~(aiProcess_OptimizeGraph); // Never use as it doesn't handle transforms with negative determinants
         assimpFlags &= ~(aiProcess_RemoveRedundantMaterials); // Avoid merging materials as it doesn't load all fields we care about, we merge in 'SceneBuilder' instead.
         assimpFlags &= ~(aiProcess_SplitLargeMeshes); // Avoid splitting large meshes
+        assimpFlags |= aiProcess_GlobalScale;
         if (is_set(builderFlags, SceneBuilder::Flags::DontMergeMeshes)) assimpFlags &= ~aiProcess_OptimizeMeshes; // Avoid merging original meshes
 
         // Configure importer to remove vertex components we don't support.
@@ -1026,6 +1027,7 @@ namespace Falcor
 
         const aiScene* pScene = importer.ReadFile(fullpath, assimpFlags);
         timeReport.measure("Loading asset file");
+        const auto appScale = importer.GetPropertyFloat(AI_CONFIG_APP_SCALE_KEY);
 
         if (pScene == nullptr)
         {
@@ -1074,7 +1076,7 @@ namespace Falcor
         }
         timeReport.measure("Creating animations");
 
-        if (createCameras(data, importMode) == false)
+        if (createCameras(data, importMode, appScale) == false)
         {
             logError("Can't create a camera for model " + filename);
             return false;
