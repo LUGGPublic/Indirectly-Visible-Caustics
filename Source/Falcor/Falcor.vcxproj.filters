@@ -409,6 +409,9 @@
     <ClInclude Include="Utils\Debug\DebugConsole.h">
       <Filter>Utils\Debug</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\Debug\PathDebug.h">
+      <Filter>Utils\Debug</Filter>
+    </ClInclude>
     <ClInclude Include="Utils\Algorithm\PrefixSum.h">
       <Filter>Utils\Algorithm</Filter>
     </ClInclude>
@@ -1158,6 +1161,9 @@
     <ClCompile Include="Utils\Debug\PixelDebug.cpp">
       <Filter>Utils\Debug</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\Debug\PathDebug.cpp">
+      <Filter>Utils\Debug</Filter>
+    </ClCompile>
     <ClCompile Include="Utils\Algorithm\PrefixSum.cpp">
       <Filter>Utils\Algorithm</Filter>
     </ClCompile>
@@ -1344,6 +1350,15 @@
       <Filter>Utils\Algorithm</Filter>
     </ShaderSource>
     <ShaderSource Include="Utils\Debug\PixelDebug.slang">
+      <Filter>Utils\Debug</Filter>
+    </ShaderSource>
+    <ShaderSource Include="Utils\Debug\PathDebug.slang">
+      <Filter>Utils\Debug</Filter>
+    </ShaderSource>
+    <ShaderSource Include="Utils\Debug\PathDebug.3d.slang">
+      <Filter>Utils\Debug</Filter>
+    </ShaderSource>
+    <ShaderSource Include="Utils\Debug\PathDebugData.slang">
       <Filter>Utils\Debug</Filter>
     </ShaderSource>
     <ShaderSource Include="Utils\Algorithm\PrefixSum.cs.slang">
@@ -1648,6 +1663,9 @@
     </ShaderSource>
     <ShaderSource Include="Utils\Sampling\AliasTable.slang">
       <Filter>Utils\Sampling</Filter>
+    </ShaderSource>
+    <ShaderSource Include="Utils\Debug\PathDebugClearing.cs.slang">
+      <Filter>Utils\Debug</Filter>
     </ShaderSource>
   </ItemGroup>
 </Project>

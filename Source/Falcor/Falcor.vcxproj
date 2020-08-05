@@ -270,6 +270,7 @@
     <ClInclude Include="Utils\Color\ColorUtils.h" />
     <ClInclude Include="Utils\Debug\DebugConsole.h" />
     <ClInclude Include="Utils\Debug\PixelDebug.h" />
+    <ClInclude Include="Utils\Debug\PathDebug.h" />
     <ShaderSource Include="Utils\Algorithm\ParallelReductionType.slangh" />
     <ShaderSource Include="Utils\Attributes.slang" />
     <ShaderSource Include="Utils\Color\ColorHelpers.slang" />
@@ -279,8 +280,12 @@
     <ClInclude Include="Utils\Math\AABB.h" />
     <ClInclude Include="Utils\Math\CubicSpline.h" />
     <ClInclude Include="Utils\Math\FalcorMath.h" />
+    <ShaderSource Include="Utils\Debug\PathDebugClearing.cs.slang" />
     <ShaderSource Include="Utils\Debug\PixelDebugTypes.slang" />
     <ShaderSource Include="Utils\Debug\ReflectPixelDebugTypes.cs.slang" />
+    <ShaderSource Include="Utils\Debug\PathDebug.slang" />
+    <ShaderSource Include="Utils\Debug\PathDebug.3d.slang" />
+    <ShaderSource Include="Utils\Debug\PathDebugData.slang" />
     <ShaderSource Include="Utils\Helpers.slang" />
     <ClInclude Include="Utils\Math\MathHelpers.h" />
     <ClInclude Include="Utils\Math\PackedFormats.h" />
@@ -681,6 +686,7 @@
     <ClCompile Include="Utils\Algorithm\PrefixSum.cpp" />
     <ClCompile Include="Utils\AsyncTextureLoader.cpp" />
     <ClCompile Include="Utils\Debug\PixelDebug.cpp" />
+    <ClCompile Include="Utils\Debug\PathDebug.cpp" />
     <ClCompile Include="Utils\Image\Bitmap.cpp" />
     <ClCompile Include="Utils\Image\ImageIO.cpp" />
     <ClCompile Include="Utils\Logger.cpp" />
