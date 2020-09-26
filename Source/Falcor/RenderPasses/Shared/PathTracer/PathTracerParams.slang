@@ -77,9 +77,9 @@ struct PathTracerParams
     int     clampSamples = false;           ///< Clamp the per-path contribution to 'clampThreshold' to reduce fireflies.
     float   clampThreshold = 10.f;
     float   specularRoughnessThreshold = 0.25f; ///< Specular reflection events are only classified as specular if the material's roughness value is equal or smaller than this threshold.
-    float   _pad0;
-
     // Sampling
+    uint    fixedSeed = 0u;                 ///< Fixed seed used if 'useFixedSeed' is true.
+
     int     useBRDFSampling = true;         ///< Use BRDF importance sampling (otherwise cosine-weighted hemisphere sampling). Use compile-time constant kUseBRDFSampling in shader.
     int     useNEE = true;                  ///< Use next-event estimation (NEE). This enables shadow ray(s) from each path vertex.
     int     useMIS = true;                  ///< Use multiple importance sampling (MIS) when NEE is enabled. This enables a scatter ray from the last path vertex. Use compile-time constant kUseMIS in shader.

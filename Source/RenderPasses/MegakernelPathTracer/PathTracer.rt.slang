@@ -156,7 +156,7 @@ void rayGen()
             path.thp = float3(1.f);
 
             // Create sample generator.
-            uint frameSeed = gData.params.useFixedSeed ? 0 : gData.params.frameCount;
+            uint frameSeed = gData.params.useFixedSeed ? gData.params.fixedSeed : gData.params.frameCount;
             path.sg = SampleGenerator.create(launchIndex, frameSeed * kSamplesPerPixel + sampleIdx);
 
             // Advance the generator to the first available dimension.

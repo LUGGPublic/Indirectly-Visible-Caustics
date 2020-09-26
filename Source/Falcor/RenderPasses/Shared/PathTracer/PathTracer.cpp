@@ -326,6 +326,8 @@ namespace Falcor
             samplingGroup.checkbox("Use fixed seed", mSharedParams.useFixedSeed);
             samplingGroup.tooltip("Forces a fixed random seed for each frame.\n\n"
                 "This should produce exactly the same image each frame, which can be useful for debugging using print() and otherwise.", true);
+
+            samplingGroup.var("Fixed seed", mSharedParams.fixedSeed);
         }
 
         return dirty;
