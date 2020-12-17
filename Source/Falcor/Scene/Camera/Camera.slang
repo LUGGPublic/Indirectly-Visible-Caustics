@@ -28,6 +28,8 @@
 import Scene.Camera.CameraData;
 import Utils.Math.MathHelpers;
 
+#include "Utils/Math/MathConstants.slangh"
+
 struct CameraRay
 {
     float3 origin;
@@ -75,6 +77,28 @@ struct Camera
     }
 
     /** Computes the primary ray's direction, non-normalized assuming pinhole camera model.
+        \param[in] pixel Pixel coordinates with origin in top-left.
+        \param[in] frameDim Image plane dimensions in pixels.
+        \param[in] offset Offset in screen space in [0,1] with origin at the top left corner.
+        \param[in] useJitter Whether the camera jitter is taken into account to compute the sample position on the image plane.
+        \return Returns the non-normalized ray direction
+    */
+    float3 computeNonNormalizedRayDirPinhole(uint2 pixel, uint2 frameDim, float2 offset, bool useJitter)
+    {
+        // Compute sample position in screen space in [0,1] with origin at the top-left corner.
+        float2 p = (pixel + offset) / frameDim;
+        if (useJitter)
+        {
+            // The camera jitter offsets the sample by +-0.5 pixels from the pixel center.
+            p += float2(-data.jitterX, data.jitterY);
+        }
+        float2 ndc = float2(2, -2) * p + float2(-1, 1);
+
+        // Compute the non-normalized ray direction assuming a pinhole camera.
+        return ndc.x * data.cameraU + ndc.y * data.cameraV + data.cameraW;
+    }
+
+    /** Computes the primary ray's direction, non-normalized assuming pinhole camera model.
         The camera jitter is taken into account to compute the sample position on the image plane.
         \param[in] pixel Pixel coordinates with origin in top-left.
         \param[in] frameDim Image plane dimensions in pixels.
@@ -82,13 +106,7 @@ struct Camera
     */
     float3 computeNonNormalizedRayDirPinhole(uint2 pixel, uint2 frameDim)
     {
-        // Compute sample position in screen space in [0,1] with origin at the top-left corner.
-        // The camera jitter offsets the sample by +-0.5 pixels from the pixel center.
-        float2 p = (pixel + float2(0.5f, 0.5f)) / frameDim + float2(-data.jitterX, data.jitterY);
-        float2 ndc = float2(2, -2) * p + float2(-1, 1);
-
-        // Compute the non-normalized ray direction assuming a pinhole camera.
-        return ndc.x * data.cameraU + ndc.y * data.cameraV + data.cameraW;
+        return computeNonNormalizedRayDirPinhole(pixel, frameDim, float2(0.5f, 0.5f), true);
     }
 
 
@@ -121,5 +139,53 @@ struct Camera
         ray.tMax = data.farZ * invCos;
 
         return ray;
+    }
+
+    /** Estimates the area of the surfaces, in world space, found under a pixel.
+        \param[in] viewSamplePosW Position in world space for the considered view sample.
+        \param[in] viewSampleNormW Normal in world space for the considered view sample.
+        \param[in] pixel Pixel coordinates with origin in top-left.
+        \param[in] frameDim Image plane dimensions in pixels.
+        \param[out] isValid True if the estimation was successful, false otherwise.
+        \return Returns the area under the given pixel.
+    */
+    float estimateAreaUnderPixel(const float3 viewSamplePosW, const float3 viewSampleNormW,
+                                 const uint2 pixel, const uint2 frameDim, out bool isValid)
+    {
+        isValid = false;
+
+        const float3 dirTL = computeNonNormalizedRayDirPinhole(pixel, frameDim, float2(0.0f, 0.0f), false);
+        const float3 dirTR = computeNonNormalizedRayDirPinhole(pixel, frameDim, float2(1.0f, 0.0f), false);
+        const float3 dirBL = computeNonNormalizedRayDirPinhole(pixel, frameDim, float2(0.0f, 1.0f), false);
+        const float3 dirBR = computeNonNormalizedRayDirPinhole(pixel, frameDim, float2(1.0f, 1.0f), false);
+
+        const float cosThetaTL = -dot(viewSampleNormW, dirTL);
+        const float cosThetaTR = -dot(viewSampleNormW, dirTR);
+        const float cosThetaBL = -dot(viewSampleNormW, dirBL);
+        const float cosThetaBR = -dot(viewSampleNormW, dirBR);
+        if (cosThetaTL <= FLT_MIN || cosThetaTR <= FLT_MIN ||
+            cosThetaBL <= FLT_MIN || cosThetaBR <= FLT_MIN) return 0.0f;
+
+        isValid = true;
+        const float nom = dot(viewSampleNormW, viewSamplePosW) - dot(viewSampleNormW, data.posW);
+
+        // Projected point: data.posW + t * dir
+        // Area: 0.5 * length(cross(proj0 - proj1, proj0 - proj2))
+        // |-> 0.5 * length(cross(t0 * dir0 - t1 * dir1, t0 * dir0 - t2 * dir2))
+
+        const float tTL = 1.0f / cosThetaTL;
+        const float tTR = 1.0f / cosThetaTR;
+        const float tBL = 1.0f / cosThetaBL;
+        const float tBR = 1.0f / cosThetaBR;
+
+        const float3 projTL = tTL * dirTL;
+        const float3 projTR = tTR * dirTR;
+        const float3 projBL = tBL * dirBL;
+        const float3 projBR = tBR * dirBR;
+
+        const float areaTriangle1 = 0.5f * nom * nom * length(cross(projTL - projBL, projTL - projTR));
+        const float areaTriangle2 = 0.5f * nom * nom * length(cross(projBR - projTR, projBR - projBL));
+
+        return areaTriangle1 + areaTriangle2;
     }
 };
