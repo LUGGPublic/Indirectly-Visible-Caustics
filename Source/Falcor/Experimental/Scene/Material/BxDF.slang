@@ -74,7 +74,14 @@ interface IBxDF
         \param[in] wi Incident direction.
         \return Returns f(wo, wi) * dot(wi, n).
     */
-    float3 eval(float3 wo, float3 wi);
+
+    float3 evalNoCos(float3 wo, float3 wi);
+    /** Evaluates the BxDF.
+        \param[in] wo Outgoing direction.
+        \param[in] wi Incident direction.
+        \return Returns f(wo, wi).
+    */
+    float3 evalNoCos(float3 wo, float3 wi);
 
     /** Samples the BxDF.
         \param[in] wo Outgoing direction.
@@ -107,6 +114,13 @@ struct DiffuseReflectionLambert : IBxDF
         if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
 
         return M_1_PI * albedo * wi.z;
+    }
+
+    float3 evalNoCos(float3 wo, float3 wi)
+    {
+        if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
+
+        return M_1_PI * albedo;
     }
 
     bool sample<S : ISampleGenerator>(float3 wo, out float3 wi, out float pdf, out float3 weight, out uint lobe, inout S sg)
@@ -145,6 +159,13 @@ struct DiffuseReflectionDisney : IBxDF
         if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
 
         return evalWeight(wo, wi) * M_1_PI * wi.z;
+    }
+
+    float3 evalNoCos(float3 wo, float3 wi)
+    {
+        if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
+
+        return evalWeight(wo, wi) * M_1_PI;
     }
 
     bool sample<S : ISampleGenerator>(float3 wo, out float3 wi, out float pdf, out float3 weight, out uint lobe, inout S sg)
@@ -198,6 +219,13 @@ struct DiffuseReflectionFrostbite : IBxDF
         if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
 
         return evalWeight(wo, wi) * M_1_PI * wi.z;
+    }
+
+    float3 evalNoCos(float3 wo, float3 wi)
+    {
+        if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
+
+        return evalWeight(wo, wi) * M_1_PI;
     }
 
     bool sample<S : ISampleGenerator>(float3 wo, out float3 wi, out float pdf, out float3 weight, out uint lobe, inout S sg)
@@ -271,6 +299,30 @@ struct SpecularReflectionMicrofacet : IBxDF
 #endif
         float3 F = evalFresnelSchlick(albedo, 1, woDotH);
         return F * D * G * 0.25 / wo.z;
+    }
+
+    float3 evalNoCos(float3 wo, float3 wi)
+    {
+        if (min(wo.z, wi.z) < kMinCosTheta) return float3(0);
+
+#if EnableDeltaBSDF
+        // Handle delta reflection.
+        if (alpha == 0) return float3(0);
+#endif
+
+        if (!hasLobe(LobeType::SpecularReflection)) return float3(0);
+
+        float3 h = normalize(wo + wi);
+        float woDotH = dot(wo, h);
+
+        float D = evalNdfGGX(alpha, h.z);
+#if SpecularMaskingFunction == SpecularMaskingFunctionSmithGGXSeparable
+        float G = evalMaskingSmithGGXSeparable(alpha, wo.z, wi.z);
+#elif SpecularMaskingFunction == SpecularMaskingFunctionSmithGGXCorrelated
+        float G = evalMaskingSmithGGXCorrelated(alpha, wo.z, wi.z);
+#endif
+        float3 F = evalFresnelSchlick(albedo, 1, woDotH);
+        return F * D * G * 0.25 / (wo.z * wi.z);
     }
 
     bool sample<S : ISampleGenerator>(float3 wo, out float3 wi, out float pdf, out float3 weight, out uint lobe, inout S sg)
@@ -408,6 +460,47 @@ struct SpecularReflectionTransmissionMicrofacet : IBxDF
             float sqrtDenom = woDotH + eta * wiDotH;
             float t = eta * eta * abs(woDotH * wiDotH) / (abs(wo.z * wi.z) * sqrtDenom * sqrtDenom);
             return (1 - F) * D * G * t * abs(wi.z);
+        }
+    }
+
+    float3 evalNoCos(float3 wo, float3 wi)
+    {
+        if (min(wo.z, abs(wi.z)) < kMinCosTheta) return float3(0);
+
+#if EnableDeltaBSDF
+        // Handle delta reflection/transmission.
+        if (alpha == 0) return float3(0);
+#endif
+
+        bool isReflection = wi.z > 0;
+        if ((isReflection && !hasLobe(LobeType::SpecularReflection)) ||
+            (!isReflection && !hasLobe(LobeType::SpecularTransmission))) return float3(0);
+
+        float3 h =
+            isReflection ?
+            normalize(wo + wi) :
+            normalize(-(wo * eta + wi));
+
+        float woDotH = dot(wo, h);
+        float wiDotH = dot(wi, h);
+
+        float D = evalNdfGGX(alpha, h.z);
+#if SpecularMaskingFunction == SpecularMaskingFunctionSmithGGXSeparable
+        float G = evalMaskingSmithGGXSeparable(alpha, wo.z, abs(wi.z));
+#elif SpecularMaskingFunction == SpecularMaskingFunctionSmithGGXCorrelated
+        float G = evalMaskingSmithGGXCorrelated(alpha, wo.z, abs(wi.z));
+#endif
+        float F = evalFresnelDielectric(eta, woDotH);
+
+        if (isReflection)
+        {
+            return F * D * G * 0.25 / (wo.z * wi.z);
+        }
+        else
+        {
+            float sqrtDenom = woDotH + eta * wiDotH;
+            float t = eta * eta * abs(woDotH * wiDotH) / (abs(wo.z * wi.z) * sqrtDenom * sqrtDenom);
+            return (1 - F) * D * G * t;
         }
     }
 
@@ -665,6 +758,15 @@ struct FalcorBSDF : IBxDF
         if (pDiffuseReflection > 0) result += (1 - specularTransmission) * diffuseReflection.eval(wo, wi);
         if (pSpecularReflection > 0) result += (1 - specularTransmission) * specularReflection.eval(wo, wi);
         if (pSpecularReflectionTransmission > 0) result += specularTransmission * (specularReflectionTransmission.eval(wo, wi));
+        return result;
+    }
+
+    float3 evalNoCos(float3 wo, float3 wi)
+    {
+        float3 result = 0;
+        if (pDiffuseReflection > 0) result += (1 - specularTransmission) * diffuseReflection.evalNoCos(wo, wi);
+        if (pSpecularReflection > 0) result += (1 - specularTransmission) * specularReflection.evalNoCos(wo, wi);
+        if (pSpecularReflectionTransmission > 0) result += specularTransmission * (specularReflectionTransmission.evalNoCos(wo, wi));
         return result;
     }
 

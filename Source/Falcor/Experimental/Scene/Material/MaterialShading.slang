@@ -100,6 +100,22 @@ float3 evalBSDFCosine(const ShadingData sd, float3 L)
     return bsdf.eval(wo, wi);
 }
 
+/** Evaluates the BSDF for a given incident direction.
+
+    \param[in] sd Shading point data.
+    \param[in] L Normalized incident direction from shading point towards light source.
+    \return (f_d + f_r)
+*/
+float3 evalBSDF(const ShadingData sd, float3 L)
+{
+    float3 wo = toLocal(sd.V, sd);
+    float3 wi = toLocal(L, sd);
+
+    FalcorBSDF bsdf;
+    bsdf.setup(sd);
+    return bsdf.evalNoCos(wo, wi);
+}
+
 /** Importance sampling of the BSDF.
 
     Note: The evaluated pdf for the generated sample is expensive to compute, as the pdf is a weighted
