@@ -479,3 +479,39 @@ float rand_next(inout uint s)
     s = (LCG_A * s + LCG_C);
     return float(s & 0x00FFFFFF) / float(0x01000000);
 }
+
+/*******************************************************************
+        Atomic helpers
+*******************************************************************/
+void interlockedAddFp32(RWByteAddressBuffer buffer, uint address, float value)
+{
+    float initialValue, computedValue;
+    uint originalValue;
+
+    [allow_uav_condition] do
+    {
+        initialValue = asfloat(buffer.Load(address));
+        computedValue = initialValue + value;
+        buffer.InterlockedCompareExchange(address, asuint(initialValue), asuint(computedValue), originalValue);
+    } while (initialValue != asfloat(originalValue));
+}
+
+void interlockedMaxFp32(RWByteAddressBuffer buffer, uint address, float value)
+{
+    float initialValue, computedValue;
+    uint originalValue;
+
+    [allow_uav_condition] do
+    {
+        initialValue = asfloat(buffer.Load(address));
+        computedValue = max(initialValue, value);
+        buffer.InterlockedCompareExchange(address, asuint(initialValue), asuint(computedValue), originalValue);
+    } while (initialValue != asfloat(originalValue));
+}
+
+void interlockedAddFloat3(RWByteAddressBuffer buffer, uint address, float3 value)
+{
+    interlockedAddFp32(buffer, address + 0u * 4u, value.r);
+    interlockedAddFp32(buffer, address + 1u * 4u, value.g);
+    interlockedAddFp32(buffer, address + 2u * 4u, value.b);
+}
