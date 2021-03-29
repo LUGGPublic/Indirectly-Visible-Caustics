@@ -538,6 +538,9 @@
     <ClInclude Include="Utils\Sampling\AliasTable.h">
       <Filter>Utils\Sampling</Filter>
     </ClInclude>
+    <ClInclude Include="Utils\AccelerationStructures\CachingViaBVH.h">
+      <Filter>Utils\AccelerationStructures</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <Filter Include="Core">
@@ -689,6 +692,9 @@
     </Filter>
     <Filter Include="Experimental\Scene\Volume">
       <UniqueIdentifier>{b71b1c11-7080-4491-9571-9daad77e3a75}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Utils\AccelerationStructures">
+      <UniqueIdentifier>{2b1db46b-56a1-4144-b3a1-01ac57f46f5d}</UniqueIdentifier>
     </Filter>
   </ItemGroup>
   <ItemGroup>
@@ -1272,6 +1278,9 @@
     <ClCompile Include="Utils\Sampling\AliasTable.cpp">
       <Filter>Utils\Sampling</Filter>
     </ClCompile>
+    <ClCompile Include="Utils\AccelerationStructures\CachingViaBVH.cpp">
+      <Filter>Utils\AccelerationStructures</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Xml Include="dependencies.xml" />
@@ -1666,6 +1675,9 @@
     </ShaderSource>
     <ShaderSource Include="Utils\Debug\PathDebugClearing.cs.slang">
       <Filter>Utils\Debug</Filter>
+    </ShaderSource>
+    <ShaderSource Include="Utils\AccelerationStructures\CachingViaBVH.slang">
+      <Filter>Utils\AccelerationStructures</Filter>
     </ShaderSource>
   </ItemGroup>
 </Project>

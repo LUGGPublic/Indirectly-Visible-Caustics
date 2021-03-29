@@ -239,6 +239,7 @@
     <ClInclude Include="Scene\Volume\Volume.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="Testing\UnitTest.h" />
+    <ClInclude Include="Utils\AccelerationStructures\CachingViaBVH.h" />
     <ClInclude Include="Utils\Algorithm\BitonicSort.h" />
     <ClInclude Include="Utils\Algorithm\ComputeParallelReduction.h" />
     <ClInclude Include="Utils\Algorithm\DirectedGraph.h" />
@@ -262,6 +263,7 @@
     <ShaderSource Include="Scene\Volume\Volume.slang" />
     <ShaderSource Include="Scene\Volume\VolumeData.slang" />
     <ShaderSource Include="Testing\UnitTest.cs.slang" />
+    <ShaderSource Include="Utils\AccelerationStructures\CachingViaBVH.slang" />
     <ShaderSource Include="Utils\Algorithm\ParallelReduction.ps.slang" />
     <ClInclude Include="Utils\Algorithm\PrefixSum.h" />
     <ClInclude Include="Utils\AlignedAllocator.h" />
@@ -680,6 +682,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='DebugD3D12|x64'">Create</PrecompiledHeader>
     </ClCompile>
     <ClCompile Include="Testing\UnitTest.cpp" />
+    <ClCompile Include="Utils\AccelerationStructures\CachingViaBVH.cpp" />
     <ClCompile Include="Utils\Algorithm\BitonicSort.cpp" />
     <ClCompile Include="Utils\Algorithm\ComputeParallelReduction.cpp" />
     <ClCompile Include="Utils\Algorithm\ParallelReduction.cpp" />
