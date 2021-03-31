@@ -464,6 +464,10 @@ namespace Mogwai
         SceneBuilder::SharedPtr pBuilder = SceneBuilder::create(filename, buildFlags);
         if (!pBuilder) return;
 
+        // HACK: Required to have the custom interesection group 0 show up in the SBT.
+        pBuilder->addCustomPrimitive(0, AABB(float3(std::numeric_limits<float>::quiet_NaN()),
+                                             float3(std::numeric_limits<float>::quiet_NaN())));
+
         setScene(pBuilder->getScene());
 
         timeReport.measure("Loading scene (total)");

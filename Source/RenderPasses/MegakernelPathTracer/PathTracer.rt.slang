@@ -107,6 +107,18 @@ void shadowAnyHit(
 #endif
 }
 
+[shader("intersection")]
+void unusedIsect()
+{
+    BuiltInTriangleIntersectionAttributes attribs;
+    ReportHit(RayTCurrent(), 0, attribs);
+}
+
+[shader("closesthit")]
+void unusedChit(inout ScatterRayData rayData : SV_RayPayload, BuiltInTriangleIntersectionAttributes attribs : SV_IntersectionAttributes)
+{
+}
+
 /** ******************************** RayGen ******************************** */
 
 /** This is the entry point for the path tracer.

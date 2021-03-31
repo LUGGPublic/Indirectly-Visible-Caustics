@@ -120,6 +120,7 @@ GBufferRT::GBufferRT(const Dictionary& dict)
     RtProgram::Desc desc;
     desc.addShaderLibrary(kProgramFile).setRayGen("rayGen");
     desc.addHitGroup(0, "closestHit", "anyHit").addMiss(0, "miss");
+    desc.addIntersection(0, "unusedIsect").addAABBHitGroup(0, "unusedChit", "");
     desc.setMaxTraceRecursionDepth(kMaxRecursionDepth);
     desc.addDefines(mpSampleGenerator->getDefines());
     mRaytrace.pProgram = RtProgram::create(desc, kMaxPayloadSizeBytes, kMaxAttributesSizeBytes);

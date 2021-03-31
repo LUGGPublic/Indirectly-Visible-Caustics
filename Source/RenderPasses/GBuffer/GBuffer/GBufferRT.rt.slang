@@ -247,6 +247,19 @@ void closestHit(
 }
 
 
+/** ************************** Custom primitives *************************** */
+
+[shader("intersection")]
+void unusedIsect()
+{
+}
+
+[shader("closesthit")]
+void unusedChit(inout RayData rayData : SV_RayPayload, BuiltInTriangleIntersectionAttributes attribs : SV_IntersectionAttributes)
+{
+}
+
+
 /** ******************************** RayGen ******************************** */
 
 [shader("raygeneration")]

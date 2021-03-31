@@ -82,6 +82,8 @@ MegakernelPathTracer::MegakernelPathTracer(const Dictionary& dict)
     progDesc.addShaderLibrary(kShaderFile).setRayGen("rayGen");
     progDesc.addHitGroup(kRayTypeScatter, "scatterClosestHit", "scatterAnyHit").addMiss(kRayTypeScatter, "scatterMiss");
     progDesc.addHitGroup(kRayTypeShadow, "", "shadowAnyHit").addMiss(kRayTypeShadow, "shadowMiss");
+    progDesc.addIntersection(kRayTypeScatter, "unusedIsect").addAABBHitGroup(kRayTypeScatter, "unusedChit", "");
+    progDesc.addIntersection(kRayTypeShadow, "unusedIsect").addAABBHitGroup(kRayTypeShadow, "unusedChit", "");
     progDesc.addDefine("MAX_BOUNCES", std::to_string(mSharedParams.maxBounces));
     progDesc.addDefine("SAMPLES_PER_PIXEL", std::to_string(mSharedParams.samplesPerPixel));
     progDesc.setMaxTraceRecursionDepth(kMaxRecursionDepth);
