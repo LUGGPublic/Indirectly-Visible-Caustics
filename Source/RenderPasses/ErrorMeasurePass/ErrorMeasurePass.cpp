@@ -45,12 +45,24 @@ namespace
     const std::string kReferenceImagePath = "ReferenceImagePath";
     const std::string kMeasurementsFilePath = "MeasurementsFilePath";
     const std::string kIgnoreBackground = "IgnoreBackground";
-    const std::string kComputeSquaredDifference = "ComputeSquaredDifference";
     const std::string kComputeAverage = "ComputeAverage";
     const std::string kUseLoadedReference = "UseLoadedReference";
     const std::string kReportRunningError = "ReportRunningError";
     const std::string kRunningErrorSigma = "RunningErrorSigma";
     const std::string kSelectedOutputId = "SelectedOutputId";
+    const std::string kSelectedMeasure = "SelectedMeasure";
+
+    std::string getMeasurePrefix(Measure measure)
+    {
+        switch (measure)
+        {
+        case Measure::MeanAbsoluteError: return "MAE";
+        case Measure::MeanPositiveError: return "MPE";
+        case Measure::MeanNegativeError: return "MNE";
+        case Measure::MeanSquaredError: return "MSE";
+        }
+        return "ERROR";
+    }
 }
 
 // Don't remove this. it's required for hot-reload to function properly
@@ -76,6 +88,14 @@ const Gui::RadioButtonGroup ErrorMeasurePass::sOutputSelectionButtonsSourceOnly 
     { (uint32_t)OutputId::Source, "Source", true }
 };
 
+const Gui::DropdownList ErrorMeasurePass::sMeasureSelectionList =
+{
+    { (uint32_t)Measure::MeanAbsoluteError, "MAE" },
+    { (uint32_t)Measure::MeanPositiveError, "MPE" },
+    { (uint32_t)Measure::MeanNegativeError, "MNE" },
+    { (uint32_t)Measure::MeanSquaredError, "MSE" }
+};
+
 ErrorMeasurePass::SharedPtr ErrorMeasurePass::create(RenderContext* pRenderContext, const Dictionary& dict)
 {
     return SharedPtr(new ErrorMeasurePass(dict));
@@ -88,12 +108,12 @@ ErrorMeasurePass::ErrorMeasurePass(const Dictionary& dict)
         if (key == kReferenceImagePath) mReferenceImagePath = value.operator std::string();
         else if (key == kMeasurementsFilePath) mMeasurementsFilePath = value.operator std::string();
         else if (key == kIgnoreBackground) mIgnoreBackground = value;
-        else if (key == kComputeSquaredDifference) mComputeSquaredDifference = value;
         else if (key == kComputeAverage) mComputeAverage = value;
         else if (key == kUseLoadedReference) mUseLoadedReference = value;
         else if (key == kReportRunningError) mReportRunningError = value;
         else if (key == kRunningErrorSigma) mRunningErrorSigma = value;
         else if (key == kSelectedOutputId) mSelectedOutputId = value;
+        else if (key == kSelectedMeasure) mSelectedMeasure = value;
         else
         {
             logWarning("Unknown field '" + key + "' in ErrorMeasurePass dictionary");
@@ -114,12 +134,12 @@ Dictionary ErrorMeasurePass::getScriptingDictionary()
     dict[kReferenceImagePath] = mReferenceImagePath;
     dict[kMeasurementsFilePath] = mMeasurementsFilePath;
     dict[kIgnoreBackground] = mIgnoreBackground;
-    dict[kComputeSquaredDifference] = mComputeSquaredDifference;
     dict[kComputeAverage] = mComputeAverage;
     dict[kUseLoadedReference] = mUseLoadedReference;
     dict[kReportRunningError] = mReportRunningError;
     dict[kRunningErrorSigma] = mRunningErrorSigma;
     dict[kSelectedOutputId] = mSelectedOutputId;
+    dict[kSelectedMeasure] = mSelectedMeasure;
     return dict;
 }
 
@@ -196,7 +216,7 @@ void ErrorMeasurePass::runDifferencePass(RenderContext* pRenderContext, const Re
     mpErrorMeasurerPass[kConstantBufferName]["gResolution"] = resolution;
     // If the world position texture is unbound, then don't do the background pixel check.
     mpErrorMeasurerPass[kConstantBufferName]["gIgnoreBackground"] = (uint32_t)(mIgnoreBackground && pWorldPositionTexture);
-    mpErrorMeasurerPass[kConstantBufferName]["gComputeDiffSqr"] = (uint32_t)mComputeSquaredDifference;
+    mpErrorMeasurerPass[kConstantBufferName]["gMeasure"] = (uint32_t)mSelectedMeasure;
     mpErrorMeasurerPass[kConstantBufferName]["gComputeAverage"] = (uint32_t)mComputeAverage;
 
     // Run the compute shader.
@@ -280,7 +300,13 @@ void ErrorMeasurePass::renderUI(Gui::Widgets& widget)
     widget.checkbox("Ignore background", mIgnoreBackground);
     widget.tooltip("Do not include background pixels in the error measurements.\n"
                       "This option requires the optional input '" + std::string(kInputChannelWorldPosition) + "' to be bound", true);
-    widget.checkbox("Compute L2 error (rather than L1)", mComputeSquaredDifference);
+    widget.dropdown("Measure", sMeasureSelectionList, reinterpret_cast<uint32_t&>(mSelectedMeasure));
+    widget.tooltip("Press 'm' to change output mode; hold 'Shift' to reverse the cycling.\n\n"
+        "Given 's' being the source and 'r' the reference, here are the available measures:\n"
+        "- MAE (Mean Absolute Error):\n\t\t`mean( |s - r| )`;\n"
+        "- MPE (Mean Positive Error):\n\t\t`mean( s - r )`;\n"
+        "- MNE (Mean Negative Error):\n\t\t`mean( r - s )`;\n"
+        "- MSE (Mean Squared Error):\n\t\t`mean( (s - r)^2 )`.", true);
     widget.checkbox("Compute RGB average", mComputeAverage);
     widget.tooltip("When enabled, the average error over the RGB components is computed when creating the difference image.\n"
         "The average is computed after squaring the differences when L2 error is selected.");
@@ -313,12 +339,14 @@ void ErrorMeasurePass::renderUI(Gui::Widgets& widget)
     widget.tooltip("Exponential moving average, sigma = " + std::to_string(mRunningErrorSigma));
     if (mMeasurements.valid)
     {
+        const std::string measurePrefix = getMeasurePrefix(mSelectedMeasure);
+
         // Use stream so we can control formatting.
         std::ostringstream oss;
         oss << std::scientific;
-        oss << (mComputeSquaredDifference ? "MSE (avg): " : "L1 error (avg): ") <<
+        oss << measurePrefix << " (avg): " <<
           (mReportRunningError ? mRunningAvgError : mMeasurements.avgError) << std::endl;
-        oss << (mComputeSquaredDifference ? "MSE (rgb): " : "L1 error (rgb): ") <<
+        oss << measurePrefix << " (rgb): " <<
           (mReportRunningError ? mRunningError.r : mMeasurements.error.r) << ", " <<
           (mReportRunningError ? mRunningError.g : mMeasurements.error.g) << ", " <<
           (mReportRunningError ? mRunningError.b : mMeasurements.error.b);
@@ -332,13 +360,23 @@ void ErrorMeasurePass::renderUI(Gui::Widgets& widget)
 
 bool ErrorMeasurePass::onKeyEvent(const KeyboardEvent& keyEvent)
 {
-    if (keyEvent.type == KeyboardEvent::Type::KeyPressed && keyEvent.key == KeyboardEvent::Key::O)
+    if (keyEvent.type == KeyboardEvent::Type::KeyPressed)
     {
         int32_t ofs = keyEvent.mods.isShiftDown ? -1 : 1;
-        int32_t index = (int32_t)mSelectedOutputId;
-        index = (index + ofs + (int32_t)OutputId::Count) % (int32_t)OutputId::Count;
-        mSelectedOutputId = (OutputId)index;
-        return true;
+        if (keyEvent.key == KeyboardEvent::Key::O)
+        {
+            int32_t index = (int32_t)mSelectedOutputId;
+            index = (index + ofs + (int32_t)OutputId::Count) % (int32_t)OutputId::Count;
+            mSelectedOutputId = (OutputId)index;
+            return true;
+        }
+        else if (keyEvent.key == KeyboardEvent::Key::M)
+        {
+            int32_t index = (int32_t)mSelectedMeasure;
+            index = (index + ofs + (int32_t)Measure::Count) % (int32_t)Measure::Count;
+            mSelectedMeasure = (Measure)index;
+            return true;
+        }
     }
 
     return false;
@@ -377,14 +415,9 @@ void ErrorMeasurePass::openMeasurementsFile()
     }
     else
     {
-        if (mComputeSquaredDifference)
-        {
-            mMeasurementsFile << "avg_L2_error,red_L2_error,green_L2_error,blue_L2_error" << std::endl;
-        }
-        else
-        {
-            mMeasurementsFile << "avg_L1_error,red_L1_error,green_L1_error,blue_L1_error" << std::endl;
-        }
+        const std::string measurePrefix = getMeasurePrefix(mSelectedMeasure);
+
+        mMeasurementsFile << "avg_" << measurePrefix << "_error,red_" << measurePrefix << "_error,green_" << measurePrefix << "_error,blue_" << measurePrefix << "_error" << std::endl;
         mMeasurementsFile << std::scientific;
     }
 }

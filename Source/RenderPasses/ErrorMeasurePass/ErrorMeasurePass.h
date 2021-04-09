@@ -26,6 +26,7 @@
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
 #pragma once
+#include "Measurements.slang"
 #include "Falcor.h"
 #include "Utils/Algorithm/ComputeParallelReduction.h"
 
@@ -82,7 +83,6 @@ private:
     std::string             mMeasurementsFilePath;              ///< Path to the output file where measurements are stored (.csv).
 
     bool                    mIgnoreBackground = true;           ///< If true, do not measure error on pixels that belong to the background.
-    bool                    mComputeSquaredDifference = true;   ///< Compute the square difference when creating the difference image.
     bool                    mComputeAverage = false;            ///< Compute the average of the RGB components when creating the difference image.
     bool                    mUseLoadedReference = false;        ///< If true, use loaded reference image instead of input.
     bool                    mReportRunningError = true;         ///< Use exponetial moving average (EMA) for the computed error.
@@ -97,7 +97,9 @@ private:
     };
 
     OutputId                mSelectedOutputId = OutputId::Source;
+    Measure                 mSelectedMeasure = Measure::MeanSquaredError;
 
     static const Gui::RadioButtonGroup sOutputSelectionButtons;
     static const Gui::RadioButtonGroup sOutputSelectionButtonsSourceOnly;
+    static const Gui::DropdownList sMeasureSelectionList;
 };

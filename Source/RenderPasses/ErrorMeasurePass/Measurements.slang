@@ -1,5 +1,5 @@
 /***************************************************************************
- # Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+ # Copyright (c) 2021, NVIDIA CORPORATION. All rights reserved.
  #
  # Redistribution and use in source and binary forms, with or without
  # modification, are permitted provided that the following conditions
@@ -25,41 +25,14 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-import Measurements;
 
-Texture2D<float4>   gReference;
-Texture2D<float4>   gSource;
-Texture2D<float4>   gWorldPosition;
-RWTexture2D<float4> gResult;
-
-cbuffer PerFrameCB
+/** List of the different measurements supported by ErrorMeasurePass.
+*/
+enum class Measure
 {
-    uint2   gResolution;
-    uint    gIgnoreBackground;
-    Measure gMeasure;
-    uint    gComputeAbsoluteDiff;
-    uint    gComputeDiffSqr;
-    uint    gComputeAverage;
+    MeanAbsoluteError,
+    MeanPositiveError,
+    MeanNegativeError,
+    MeanSquaredError,
+    Count
 };
-
-[numthreads(16, 16, 1)]
-void main( uint3 DTid : SV_DispatchThreadID )
-{
-    const uint2 pixel = DTid.xy;
-    if (any(pixel >= gResolution)) return;
-
-    // Determine if we should include this pixel or not.
-    const float4 worldPos = gWorldPosition[pixel]; 
-    const bool isForeground = worldPos.w != 0.0f;  // We're using the w-component to identify valid pixels.
-
-    const bool isPixelValid = !gIgnoreBackground || isForeground;
-
-    // Compute error based on the current options.
-    float3 diff = isPixelValid ? gSource[pixel].rgb - gReference[pixel].rgb : float3(0.0f);
-    if (gMeasure == Measure::MeanSquaredError) diff *= diff;
-    else if (gMeasure == Measure::MeanAbsoluteError) diff = abs(diff);
-    else if (gMeasure == Measure::MeanNegativeError) diff = -diff;
-    if (gComputeAverage) diff.rgb = (diff.r + diff.g + diff.b) / 3.f;
-
-    gResult[pixel] = float4(diff, 0.0f);
-}
