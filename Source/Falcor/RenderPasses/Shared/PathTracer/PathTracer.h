@@ -92,6 +92,10 @@ namespace Falcor
         EmissiveUniformSampler::Options     mUniformSamplerOptions;         ///< Current options for the uniform sampler.
         LightBVHSampler::Options            mLightBVHSamplerOptions;        ///< Current options for the light BVH sampler.
 
+        bool                                mMatchKim19 = false;
+        uint32_t                            mMaxCameraBounces = 3;
+        uint32_t                            mMaxLightBounces = 0;
+
         // Runtime data
         bool                                mOptionsChanged = false;        ///< True if the config has changed since last frame.
         bool                                mUseAnalyticLights = false;     ///< True if analytic lights should be used for the current frame. See compile-time constant in StaticParams.slang.
@@ -118,6 +122,9 @@ namespace Falcor
             serialize(mSelectedEmissiveSampler);
             serialize(mUniformSamplerOptions);
             serialize(mLightBVHSamplerOptions);
+            serialize(mMatchKim19);
+            serialize(mMaxCameraBounces);
+            serialize(mMaxLightBounces);
 
             if constexpr (loadFromDict)
             {

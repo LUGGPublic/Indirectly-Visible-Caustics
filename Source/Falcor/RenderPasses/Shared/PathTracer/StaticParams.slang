@@ -51,6 +51,9 @@
     USE_NESTED_DIELECTRICS          Enables nested dielectrics handling.
     USE_LIGHTS_IN_DIELECTRIC_VOLUMES Enables lights in dielectric volumes.
     DISABLE_CAUSTICS                Disables caustics.
+    MATCH_KIM19                     Matches Kim19 by disabling certain paths such as purely specular ones.
+    MAX_CAMERA_BOUNCES              When MATCH_KIM19 is enabled, the number of bounces allowed to find a diffuse surface, and until which no direct lighting is accumulated.
+    MAX_LIGHT_BOUNCES               When MATCH_KIM19 is enabled, the number of bounces allowed after finding a diffuse surface; not further diffuse surfaces are allowed afterwards and will result in path termination.
 */
 
 #ifndef SAMPLES_PER_PIXEL
@@ -79,3 +82,7 @@ static const bool kUseNestedDielectrics = USE_NESTED_DIELECTRICS;
 static const bool kUseLightsInDielectricVolumes = USE_LIGHTS_IN_DIELECTRIC_VOLUMES;
 
 static const bool kDisableCaustics = DISABLE_CAUSTICS;
+
+static const bool kMatchKim19 = MATCH_KIM19;
+static const uint kMaxCameraBounces = MAX_CAMERA_BOUNCES;
+static const uint kMaxLightBounces = MAX_LIGHT_BOUNCES;

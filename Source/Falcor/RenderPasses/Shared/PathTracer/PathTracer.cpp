@@ -148,6 +148,13 @@ namespace Falcor
     {
         bool dirty = false;
 
+        dirty |= widget.checkbox("Match Kim19", mMatchKim19);
+        if (mMatchKim19)
+        {
+            dirty |= widget.var("Max camera bounces", mMaxCameraBounces, 0u, kMaxPathLength);
+            dirty |= widget.var("Max light bounces", mMaxLightBounces, 0u, kMaxPathLength);
+        }
+
         dirty |= widget.var("Samples/pixel", mSharedParams.samplesPerPixel, 1u, 1u << 16, 1);
         if ((dirty |= widget.var("Light samples/vertex", mSharedParams.lightSamplesPerVertex, 1u, kMaxLightSamplesPerVertex))) recreateVars();  // Trigger recreation of the program vars.
         widget.tooltip("The number of shadow rays that will be traced at each path vertex.\n"
@@ -651,6 +658,10 @@ namespace Falcor
         defines.add("RAY_FOOTPRINT_MODE", std::to_string(mSharedParams.rayFootprintMode));
         defines.add("RAY_CONE_MODE", std::to_string(mSharedParams.rayConeMode));
         defines.add("RAY_FOOTPRINT_USE_MATERIAL_ROUGHNESS", std::to_string(mSharedParams.rayFootprintUseRoughness));
+
+        defines.add("MATCH_KIM19", mMatchKim19 ? "1" : "0");
+        defines.add("MAX_CAMERA_BOUNCES", std::to_string(mMaxCameraBounces));
+        defines.add("MAX_LIGHT_BOUNCES", std::to_string(mMaxLightBounces));
 
         pProgram->addDefines(defines);
     }

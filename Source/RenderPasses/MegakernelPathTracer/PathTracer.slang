@@ -306,11 +306,12 @@ void tracePath(const PathTracerData pt, ShadingData sd, inout PathData path)
 
     // Always output directly emitted light from the primary hit.
     // This is independent of whether emissive materials are treated as light sources or not.
-    path.L += sd.emissive;
+    if (!kMatchKim19) path.L += sd.emissive;
 
     // Compute iteration count.
     // We always add one bounce for handling surfaces that cannot be handled using light sampling.
-    const uint kIterationCount = kMaxBounces + 1;
+    const uint kIterationCount = !kMatchKim19 ? (kMaxBounces + 1) : ((kMaxCameraBounces + 1) + (kMaxLightBounces + 1));
+    uint remainingLightBounces = kMaxLightBounces;
 
     // Note: Do not unroll loop even though iteration count is statically known,
     // as the shader gets very large and runs slower on current generation GPUs.
@@ -324,9 +325,19 @@ void tracePath(const PathTracerData pt, ShadingData sd, inout PathData path)
         bool supportsNEE = (lobes & (uint)LobeType::DiffuseReflection) != 0 || (lobes & (uint)LobeType::SpecularReflection) != 0;
 
         // Compute direct illumination.
+        float3 direct = float3(0.0f);
+        bool couldSampleDirectLighting = false;
         if (kUseNEE && supportsNEE && (kUseLightsInDielectricVolumes || !path.isInsideVolume()))
         {
+            const float3 previousL = path.L;
             evalDirect(pt, sd, path);
+            couldSampleDirectLighting = true;
+            // Differ direct light accumulation until we know whether we have a diffuse surface.
+            if (kMatchKim19 && path.nonSpecularBounces == 0)
+            {
+                direct = path.L - previousL;
+                path.L = previousL;
+            }
         }
 
         // Russian roulette to stochastically terminate the path.
@@ -345,6 +356,26 @@ void tracePath(const PathTracerData pt, ShadingData sd, inout PathData path)
         // Generate next path segment.
         if (!generateScatterRay(pt.params, sd, path, path.sg)) return;
 
+        const bool isLastLightVertex = remainingLightBounces == 0;
+        if (kMatchKim19)
+        {
+            // Only one diffuse surface is allowed.
+            if (path.nonSpecularBounces > 1) return;
+
+            // Only add direct illumination once we have reached the first diffuse surface.
+            if (path.nonSpecularBounces == 1)
+            {
+                path.L += direct;
+
+                // We hit our first diffuse surface so we are now on the light sub path.
+                if (isLastLightVertex && couldSampleDirectLighting) return;
+                if (remainingLightBounces > 0) --remainingLightBounces;
+            }
+
+            // Have we reached our diffuse collection point within x camera bounces?
+            if (path.nonSpecularBounces == 0u && depth >= kMaxCameraBounces) return;
+        }
+
         // Scatter the ray footprint out of the surface. Primary bounce is handled at footprint creation time.
         if (depth > 0)
         {
@@ -355,7 +386,8 @@ void tracePath(const PathTracerData pt, ShadingData sd, inout PathData path)
         if (path.isTransmission()) path.origin = path.transmissionOrigin;
 
         // Check if this is the last path vertex.
-        const bool isLastVertex = path.length == kMaxBounces || path.nonSpecularBounces > kMaxNonSpecularBounces;
+        const bool isLastVertex = !kMatchKim19 ? path.length == kMaxBounces || path.nonSpecularBounces > kMaxNonSpecularBounces
+                                               : isLastLightVertex && !couldSampleDirectLighting;
 
         // Terminate if this is the last path vertex and light sampling already completely sampled incident radiance.
         if (isLastVertex && (kUseNEE && !kUseMIS && path.isLightSamplable())) return;
