@@ -220,11 +220,13 @@ namespace Falcor
             resetTime(pAiNode->mScalingKeys, pAiNode->mNumScalingKeys);
         }
 
-        void createAnimation(ImporterData& data, const aiAnimation* pAiAnim)
+        void createAnimation(ImporterData& data, const aiAnimation* pAiAnim, ImportMode importMode)
         {
             assert(pAiAnim->mNumMeshChannels == 0);
             double duration = pAiAnim->mDuration;
             double ticksPerSecond = pAiAnim->mTicksPerSecond ? pAiAnim->mTicksPerSecond : 25;
+            // XXX: The glTF importer changes mTicksPerSecond to 1000 but it somehow get overwritten later.
+            if (importMode == ImportMode::GLTF2) ticksPerSecond = 1000.0f;
             double durationInSeconds = duration / ticksPerSecond;
 
             for (uint32_t i = 0; i < pAiAnim->mNumChannels; i++)
@@ -394,11 +396,11 @@ namespace Falcor
             return true;
         }
 
-        bool createAnimations(ImporterData& data)
+        bool createAnimations(ImporterData& data, ImportMode importMode)
         {
             for (uint32_t i = 0; i < data.pScene->mNumAnimations; i++)
             {
-                createAnimation(data, data.pScene->mAnimations[i]);
+                createAnimation(data, data.pScene->mAnimations[i], importMode);
             }
             return true;
         }
@@ -1069,7 +1071,7 @@ namespace Falcor
         addMeshInstances(data, data.pScene->mRootNode);
         timeReport.measure("Creating meshes");
 
-        if (createAnimations(data) == false)
+        if (createAnimations(data, importMode) == false)
         {
             logError("Can't create animations for model " + filename);
             return false;
