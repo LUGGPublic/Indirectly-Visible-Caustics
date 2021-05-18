@@ -343,6 +343,9 @@ namespace Falcor
 
         float3 up = getUpVector();
         if (widget.var("Up", up, -FLT_MAX, FLT_MAX, 0.001f)) setUpVector(up);
+
+        float3 dir = glm::normalize(mData.target - mData.posW);
+        widget.var("Dir", dir, -FLT_MAX, FLT_MAX, 0.001f);
     }
 
     std::string Camera::getScript(const std::string& cameraVar)
