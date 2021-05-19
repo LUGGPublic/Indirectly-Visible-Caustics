@@ -273,7 +273,12 @@ namespace Falcor
             for (const Profiler::EventData* pData : pProfiler->getLastFrameEvents())
             {
                 auto name = pData->name;
-                d[name.c_str()] = pData->toPython();
+                //d[name.c_str()] = pData->toPython();
+
+                pybind11::dict d1;
+                d1["cpuTime"] = pProfiler->getEventCpuTime(name);
+                d1["gpuTime"] = pProfiler->getEventGpuTime(name);
+                d[name.c_str()] = d1;
             }
 
             return d;
