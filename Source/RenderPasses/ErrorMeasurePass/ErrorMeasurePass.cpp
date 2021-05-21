@@ -63,6 +63,20 @@ namespace
         }
         return "ERROR";
     }
+
+    void regErrorMeasurePass(pybind11::module& m)
+    {
+        pybind11::class_<ErrorMeasurePass, RenderPass, ErrorMeasurePass::SharedPtr> pass(m, "ErrorMeasurePass");
+        pass.def("setReference", &ErrorMeasurePass::loadReference, "filename"_a);
+        pass.def("setMeasurementsFile", &ErrorMeasurePass::openMeasurementsFile, "filename"_a);
+        pass.def("useMeasurement", &ErrorMeasurePass::useMeasurement, "measure"_a);
+
+        pybind11::enum_<Measure> measure(m, "ErrorMeasureType");
+        measure.value("MeanAbsoluteError", Measure::MeanAbsoluteError);
+        measure.value("MeanPositiveError", Measure::MeanPositiveError);
+        measure.value("MeanNegativeError", Measure::MeanNegativeError);
+        measure.value("MeanSquaredError", Measure::MeanSquaredError);
+    }
 }
 
 // Don't remove this. it's required for hot-reload to function properly
@@ -74,6 +88,7 @@ extern "C" __declspec(dllexport) const char* getProjDir()
 extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary& lib)
 {
     lib.registerClass("ErrorMeasurePass", "Error Measurement Pass", ErrorMeasurePass::create);
+    ScriptBindings::registerBinding(regErrorMeasurePass);
 }
 
 const Gui::RadioButtonGroup ErrorMeasurePass::sOutputSelectionButtons =
@@ -121,8 +136,8 @@ ErrorMeasurePass::ErrorMeasurePass(const Dictionary& dict)
     }
 
     // Load/create files (if specified in config).
-    loadReference();
-    openMeasurementsFile();
+    loadReference(mReferenceImagePath);
+    openMeasurementsFile(mMeasurementsFilePath);
 
     mpParallelReduction = ComputeParallelReduction::create();
     mpErrorMeasurerPass = ComputePass::create(kErrorComputationShaderFile);
@@ -265,8 +280,7 @@ void ErrorMeasurePass::renderUI(Gui::Widgets& widget)
         std::string filename;
         if (openFileDialog(filters, filename))
         {
-            mReferenceImagePath = filename;
-            loadReference();
+            loadReference(filename);
         }
     }
 
@@ -278,8 +292,7 @@ void ErrorMeasurePass::renderUI(Gui::Widgets& widget)
         std::string filename;
         if (saveFileDialog(filters, filename))
         {
-            mMeasurementsFilePath = filename;
-            openMeasurementsFile();
+            openMeasurementsFile(filename);
         }
     }
 
@@ -382,8 +395,10 @@ bool ErrorMeasurePass::onKeyEvent(const KeyboardEvent& keyEvent)
     return false;
 }
 
-void ErrorMeasurePass::loadReference()
+void ErrorMeasurePass::loadReference(const std::string& filename)
 {
+    mReferenceImagePath = filename;
+
     if (mReferenceImagePath.empty()) return;
 
     // TODO: it would be nice to also be able to take the reference image as an input.
@@ -403,8 +418,12 @@ Texture::SharedPtr ErrorMeasurePass::getReference(const RenderData& renderData) 
     return mUseLoadedReference ? mpReferenceTexture : renderData[kInputChannelReferenceImage]->asTexture();
 }
 
-void ErrorMeasurePass::openMeasurementsFile()
+void ErrorMeasurePass::openMeasurementsFile(const std::string& filename)
 {
+    if (filename != mMeasurementsFilePath && mMeasurementsFile) mMeasurementsFile.close();
+
+    mMeasurementsFilePath = filename;
+
     if (mMeasurementsFilePath.empty()) return;
 
     mMeasurementsFile = std::ofstream(mMeasurementsFilePath, std::ios::trunc);
@@ -430,4 +449,9 @@ void ErrorMeasurePass::saveMeasurementsToFile()
     mMeasurementsFile << mMeasurements.avgError << ",";
     mMeasurementsFile << mMeasurements.error.r << ',' << mMeasurements.error.g << ',' << mMeasurements.error.b;
     mMeasurementsFile << std::endl;
+}
+
+void ErrorMeasurePass::useMeasurement(Measure measure)
+{
+    mSelectedMeasure = measure;
 }

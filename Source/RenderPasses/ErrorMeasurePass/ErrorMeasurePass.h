@@ -45,15 +45,16 @@ public:
     virtual void execute(RenderContext* pRenderContext, const RenderData& renderData) override;
     virtual void renderUI(Gui::Widgets& widget) override;
     virtual bool onKeyEvent(const KeyboardEvent& keyEvent) override;
+    void loadReference(const std::string& filename);
+    void openMeasurementsFile(const std::string& filename);
+    void useMeasurement(Measure measure);
 
 private:
     ErrorMeasurePass(const Dictionary& dict);
 
     bool init(RenderContext* pRenderContext, const Dictionary& dict);
 
-    void loadReference();
     Texture::SharedPtr getReference(const RenderData& renderData) const;
-    void openMeasurementsFile();
     void saveMeasurementsToFile();
 
     void runDifferencePass(RenderContext* pRenderContext, const RenderData& renderData);
