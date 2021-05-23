@@ -115,52 +115,52 @@ extension RayFootprint
         const float hitT = length(cameraPos - worldPos.xyz);
         float rayConeWidth = hitT * screenSpacePixelSpreadAngle;
 
-        float surfaceSpreadAngle;
-        if (kRayConeMode == RayConeMode::Combo)
-        {
-            const float4x4 worldMat = gScene.getWorldMatrix(hit.instanceID);
-            const float3x3 worldInvTransposeMat = gScene.getInverseTransposeWorldMatrix(hit.instanceID);
-            const uint3 vertexIndices = gScene.getIndices(hit.instanceID, hit.primitiveIndex);
-            const float3 barycentrics = hit.getBarycentricWeights();
-            float3 unnormalizedN, normals[3], dNdx, dNdy, edge1, edge2;
-            float2 txcoords[3], dBarydx, dBarydy, dUVdx, dUVdy;
-
-            StaticVertexData vertices[3] = { gScene.getVertex(vertexIndices[0]), gScene.getVertex(vertexIndices[1]), gScene.getVertex(vertexIndices[2]) };
-
-            RayDiff rayDiff;
-            float3 dDdx, dDdy;
-            prepareVerticesForRayDiffs(rayDir, vertices, worldMat, worldInvTransposeMat, barycentrics, edge1, edge2, normals, unnormalizedN, txcoords);
-            computeRayDirectionDifferentials(nonNormalizedRayDir, gScene.camera.data.cameraU, gScene.camera.data.cameraV, frameDim, dDdx, dDdy);
-            RayDiff rd = RayDiff.create(float3(0.0), float3(0.0), dDdx, dDdy);  // Init ray diff. dOdx = 0 , dOdy = 0, and the directions are from above.
-            rayDiff = rd.propagate(worldPos.xyz, rayDir, hitT, faceNormal);     // Propagate the ray differential to the current hit point.
-            computeBarycentricDifferentials(rayDiff, rayDir, edge1, edge2, faceNormal, dBarydx, dBarydy);
-            computeNormalDifferentials(rayDiff, unnormalizedN, dBarydx, dBarydy, normals, dNdx, dNdy);
-            float3 right = normalize(gScene.camera.computeNonNormalizedRayDirPinhole(pixel + uint2(1, 0), frameDim)) - rayDir;
-            float3 up = normalize(gScene.camera.computeNonNormalizedRayDirPinhole(pixel + uint2(0, 1), frameDim)) - rayDir;
-            surfaceSpreadAngle = computeScreenSpaceSurfaceSpreadAngle(right, up, dNdx, dNdy);
-        }
-        else if (kRayConeMode == RayConeMode::Unified)
-        {
-            // Various curvature estimation modes are available. cf. RAY_FOOTPRINT_CURVATURE_ESTIMATOR_PRIMARY define at the top of the file.
-            RAY_FOOTPRINT_CURVATURE_ESTIMATOR_PRIMARY(rayDir, rayConeWidth, screenSpacePixelSpreadAngle);      // Declares tce, the triangle curvature estimator to use.
-            float curvature = gScene.computeCurvatureGeneric(hit.instanceID, hit.primitiveIndex, tce);
-            surfaceSpreadAngle = computeSpreadAngleFromCurvatureIso(curvature, rayConeWidth, rayDir, normal);
-        }
-
-        if (kRayFootprintUseMaterialRoughness)
-        {
-            float linearRoughnessForFootprint = roughness;
-
-            // Diffuse path.
-            if (!isSpecular)
-            {
-                // Enable caustic events. TODO: Find a compromize between caustic and LOD speedups.
-                linearRoughnessForFootprint = kDisableCaustics ? 0.6 : 0.3;
-            }
-
-            // Integrating material roughness.
-            surfaceSpreadAngle += getAngleFromGGXRoughness(linearRoughnessForFootprint) * 0.125;       // Primary hits roughness spread change is reduced to 12.5% to avoid overbluring during stochastic sampling.
-        }
+        float surfaceSpreadAngle = 0.0f;
+//        if (kRayConeMode == RayConeMode::Combo)
+//        {
+//            const float4x4 worldMat = gScene.getWorldMatrix(hit.instanceID);
+//            const float3x3 worldInvTransposeMat = gScene.getInverseTransposeWorldMatrix(hit.instanceID);
+//            const uint3 vertexIndices = gScene.getIndices(hit.instanceID, hit.primitiveIndex);
+//            const float3 barycentrics = hit.getBarycentricWeights();
+//            float3 unnormalizedN, normals[3], dNdx, dNdy, edge1, edge2;
+//            float2 txcoords[3], dBarydx, dBarydy, dUVdx, dUVdy;
+//
+//            StaticVertexData vertices[3] = { gScene.getVertex(vertexIndices[0]), gScene.getVertex(vertexIndices[1]), gScene.getVertex(vertexIndices[2]) };
+//
+//            RayDiff rayDiff;
+//            float3 dDdx, dDdy;
+//            prepareVerticesForRayDiffs(rayDir, vertices, worldMat, worldInvTransposeMat, barycentrics, edge1, edge2, normals, unnormalizedN, txcoords);
+//            computeRayDirectionDifferentials(nonNormalizedRayDir, gScene.camera.data.cameraU, gScene.camera.data.cameraV, frameDim, dDdx, dDdy);
+//            RayDiff rd = RayDiff.create(float3(0.0), float3(0.0), dDdx, dDdy);  // Init ray diff. dOdx = 0 , dOdy = 0, and the directions are from above.
+//            rayDiff = rd.propagate(worldPos.xyz, rayDir, hitT, faceNormal);     // Propagate the ray differential to the current hit point.
+//            computeBarycentricDifferentials(rayDiff, rayDir, edge1, edge2, faceNormal, dBarydx, dBarydy);
+//            computeNormalDifferentials(rayDiff, unnormalizedN, dBarydx, dBarydy, normals, dNdx, dNdy);
+//            float3 right = normalize(gScene.camera.computeNonNormalizedRayDirPinhole(pixel + uint2(1, 0), frameDim)) - rayDir;
+//            float3 up = normalize(gScene.camera.computeNonNormalizedRayDirPinhole(pixel + uint2(0, 1), frameDim)) - rayDir;
+//            surfaceSpreadAngle = computeScreenSpaceSurfaceSpreadAngle(right, up, dNdx, dNdy);
+//        }
+//        else if (kRayConeMode == RayConeMode::Unified)
+//        {
+//            // Various curvature estimation modes are available. cf. RAY_FOOTPRINT_CURVATURE_ESTIMATOR_PRIMARY define at the top of the file.
+//            RAY_FOOTPRINT_CURVATURE_ESTIMATOR_PRIMARY(rayDir, rayConeWidth, screenSpacePixelSpreadAngle);      // Declares tce, the triangle curvature estimator to use.
+//            float curvature = gScene.computeCurvatureGeneric(hit.instanceID, hit.primitiveIndex, tce);
+//            surfaceSpreadAngle = computeSpreadAngleFromCurvatureIso(curvature, rayConeWidth, rayDir, normal);
+//        }
+//
+//        if (kRayFootprintUseMaterialRoughness)
+//        {
+//            float linearRoughnessForFootprint = roughness;
+//
+//            // Diffuse path.
+//            if (!isSpecular)
+//            {
+//                // Enable caustic events. TODO: Find a compromize between caustic and LOD speedups.
+//                linearRoughnessForFootprint = kDisableCaustics ? 0.6 : 0.3;
+//            }
+//
+//            // Integrating material roughness.
+//            surfaceSpreadAngle += getAngleFromGGXRoughness(linearRoughnessForFootprint) * 0.125;       // Primary hits roughness spread change is reduced to 12.5% to avoid overbluring during stochastic sampling.
+//        }
 
         // Propagate cone to primary hit point, and reflect over the surface with surfaceSpreadAngle change.
         res.rayCone = res.rayCone.propagate(surfaceSpreadAngle, hitT);
