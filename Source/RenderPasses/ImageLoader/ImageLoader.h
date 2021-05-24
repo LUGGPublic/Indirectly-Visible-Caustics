@@ -46,6 +46,7 @@ public:
     virtual void renderUI(Gui::Widgets& widget) override;
     virtual Dictionary getScriptingDictionary() override;
     virtual std::string getDesc() override;
+    void load(const std::string& filename);
 
 private:
     ImageLoader(const Dictionary& dict);

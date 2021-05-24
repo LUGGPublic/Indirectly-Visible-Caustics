@@ -38,6 +38,12 @@ namespace
     const std::string kSrgb = "srgb";
     const std::string kArraySlice = "arrayIndex";
     const std::string kMipLevel = "mipLevel";
+
+    void regImageLoader(pybind11::module& m)
+    {
+        pybind11::class_<ImageLoader, RenderPass, ImageLoader::SharedPtr> pass(m, "ImageLoader");
+        pass.def("load", &ImageLoader::load, "filename"_a);
+    }
 }
 
 // Don't remove this. it's required for hot-reload to function properly
@@ -49,6 +55,7 @@ extern "C" __declspec(dllexport) const char* getProjDir()
 extern "C" __declspec(dllexport) void getPasses(Falcor::RenderPassLibrary& lib)
 {
     lib.registerClass("ImageLoader", kDesc, ImageLoader::create);
+    ScriptBindings::registerBinding(regImageLoader);
 }
 
 std::string ImageLoader::getDesc() { return kDesc; }
@@ -85,8 +92,7 @@ ImageLoader::ImageLoader(const Dictionary& dict)
         std::string fullPath;
         if (findFileInDataDirectories(mImageName, fullPath))
         {
-            mImageName = fullPath;
-            mpTex = Texture::createFromFile(mImageName, mGenerateMips, mLoadSRGB);
+            load(fullPath);
         }
         if (!mpTex) throw std::runtime_error("ImageLoader() - Failed to load image file '" + mImageName + "'");
     }
@@ -148,7 +154,12 @@ void ImageLoader::renderUI(Gui::Widgets& widget)
 
     if (reloadImage && !mImageName.empty())
     {
-        mImageName = stripDataDirectories(mImageName);
-        mpTex = Texture::createFromFile(mImageName, mGenerateMips, mLoadSRGB);
+        load(mImageName);
     }
+}
+
+void ImageLoader::load(const std::string& filename)
+{
+    mImageName = stripDataDirectories(filename);
+    mpTex = Texture::createFromFile(mImageName, mGenerateMips, mLoadSRGB);
 }
