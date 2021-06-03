@@ -57,7 +57,7 @@ namespace
         { "matlExtra",      "gMaterialExtraParams",         "additional material data",     true /* optional */ },
         { "linColor",       "gLinearColor",                 "color pre tone-mapping",       true /* optional */ },
         { "outColor",       "gOutputColor",                 "color post tone-mapping",      true /* optional */ },
-        { "visBuffer",      "gVisBuffer",                   "Visibility buffer",            true /* optional */, ResourceFormat::RGBA32Uint },
+        { "visBuffer",      "gVisBuffer",                   "Visibility buffer",            true /* optional */, ResourceFormat::Unknown },
     };
     const char kOutputChannel[] = "gPixelDataBuffer";
 }
