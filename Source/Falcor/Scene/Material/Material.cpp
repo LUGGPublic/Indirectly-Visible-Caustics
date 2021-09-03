@@ -150,6 +150,12 @@ namespace Falcor
         float IoR = getIndexOfRefraction();
         if (widget.var("Index of refraction", IoR, 1.f, std::numeric_limits<float>::max(), 0.01f)) setIndexOfRefraction(IoR);
 
+        uint32_t nestedPriority = getNestedPriority();
+        if (widget.var("Nested priority", nestedPriority, 1u, std::numeric_limits<uint32_t>::max())) setNestedPriority(nestedPriority);
+
+        float3 volumeAbsorption = getVolumeAbsorption();
+        if (widget.var("Volume absorption", volumeAbsorption, 0.f, std::numeric_limits<float>::max(), 0.01f)) setVolumeAbsorption(volumeAbsorption);
+
         bool doubleSided = isDoubleSided();
         if (widget.checkbox("Double-sided", doubleSided)) setDoubleSided(doubleSided);
 
