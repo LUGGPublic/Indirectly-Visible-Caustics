@@ -127,6 +127,10 @@ void main(uint3 DTid : SV_DispatchThreadID)
 
     data.IoR = sd.IoR;
     data.doubleSided = sd.doubleSided ? 1u : 0u;
+    data.metallic = sd.metallic;
+
+    data.specularTransmission = sd.specularTransmission;
+    data.eta = sd.eta;
 
     // Read output data
     data.linearColor = gLinearColor[gLinearColorCoord];

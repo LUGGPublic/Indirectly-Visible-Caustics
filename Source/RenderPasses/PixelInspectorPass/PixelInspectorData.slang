@@ -68,7 +68,11 @@ struct PixelData
     float IoR;
     uint doubleSided;
     float luminance;
-    float _pad2;
+    float metallic;
+
+    float specularTransmission;
+    float eta;
+    float2 _pad2;
 
     // Output data
     float4 linearColor;
@@ -122,7 +126,11 @@ struct PixelData
         IoR = 0;
         doubleSided = 0;
         luminance = 0;
-        _pad2 = 0;
+        metallic = 0;
+
+        specularTransmission = 0;
+        eta = 0;
+        _pad2 = float2(0, 0);
 
         linearColor = float4(0, 0, 0, 0);
         outputColor = float4(0, 0, 0, 0);

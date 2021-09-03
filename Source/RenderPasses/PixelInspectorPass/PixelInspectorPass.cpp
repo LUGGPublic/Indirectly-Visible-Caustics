@@ -259,9 +259,10 @@ void PixelInspectorPass::renderUI(Gui::Widgets& widget)
             materialGroup.var("Opacity", pixelData.opacity, 0.f, 1.f, 0.001f, false, "%.6f");
         });
 
-        displayedData |= displayValues({ "specRough" }, { "Specular color", "GGX Alpha", "Roughness" }, [&materialGroup](PixelData& pixelData) {
+        displayedData |= displayValues({ "specRough" }, { "Specular color", "GGX Alpha", "Roughness", "Metallic"}, [&materialGroup](PixelData& pixelData) {
             materialGroup.var("Specular color", pixelData.specular, 0.f, 1.f, 0.001f, false, "%.6f");
             materialGroup.var("GGX Alpha", pixelData.ggxAlpha, 0.f, 1.f, 0.001f, false, "%.6f");
+            materialGroup.var("Metallic", pixelData.metallic, 0.f, 1.f, 0.1f, false, "%.6f");
             materialGroup.var("Roughness", pixelData.linearRoughness, 0.f, 1.f, 0.001f, false, "%.6f");
         });
 
@@ -269,8 +270,10 @@ void PixelInspectorPass::renderUI(Gui::Widgets& widget)
             materialGroup.var("Emissive", pixelData.emissive, 0.f, std::numeric_limits<float>::max(), 0.001f, false, "%.6f");
         });
 
-        displayedData |= displayValues({ "matlExtra" }, { "IoR", "Double sided" }, [&materialGroup](PixelData& pixelData) {
+        displayedData |= displayValues({ "matlExtra" }, { "Specular transmission", "IoR", "Eta", "Double sided"}, [&materialGroup](PixelData& pixelData) {
+            materialGroup.var("Specular transmission", pixelData.specularTransmission, 0.f, 1.0f, 0.1f, false, "%.6f");
             materialGroup.var("IoR", pixelData.IoR, 0.f, std::numeric_limits<float>::max(), 0.001f, false, "%.6f");
+            materialGroup.var("Eta", pixelData.eta, 0.f, std::numeric_limits<float>::max(), 0.001f, false, "%.6f");
             materialGroup.checkbox("Double sided", (int&)pixelData.doubleSided);
         });
 
