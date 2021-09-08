@@ -1,5 +1,5 @@
 /***************************************************************************
- # Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+ # Copyright (c) 2015-21, NVIDIA CORPORATION. All rights reserved.
  #
  # Redistribution and use in source and binary forms, with or without
  # modification, are permitted provided that the following conditions
@@ -25,14 +25,27 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#pragma once
 
-#define _LOG_ENABLED 1 // Set this to 0 to disable logging and most error checks
+// These are wrappers around Falcor::logError() and friends so they can be used in
+//    CudaUtils.cpp (for logging of CUDA errors on the standard Falcor logs) without
+//    me debugging why the CUDA and Falcor includes/namespaces don't like each other.
+// (Signs point to type conflicts, like Falcor float4 and CUDA float4, being a key issue.)
 
-#define _PROFILING_ENABLED 1                // Set this to 1 to enable CPU/GPU profiling
-#define _PROFILING_LOG 0                    // Set this to 1 to dump profiling data while profiler is active.
-#define _PROFILING_LOG_BATCH_SIZE 1024 * 1  // This can be used to control how many samples are accumulated before they are dumped to file.
+#include "Falcor.h"
 
-#define _ENABLE_NVAPI 1 // Set this to 1 to enable NVIDIA specific DX extensions. Make sure you have the NVAPI package in your 'Externals' directory. View the readme for more information.
-#define _ENABLE_CUDA 1 // Set this to 1 to enable CUDA use and CUDA/DX interoperation. Make sure you have the CUDA SDK package in your 'Externals' directory. View the readme for more information.
-#define _ENABLE_OPTIX 1 // Set this to 1 to enable OptiX. Make sure you have the OptiX SDK package in your 'Externals' directory. View the readme for more information.
+void logFatal(std::string str)
+{
+    Falcor::logFatal(str);
+}
+
+void logError(std::string str)
+{
+    Falcor::logError(str);
+}
+
+void logOptixWarning(unsigned int level, const char* tag, const char* message, void*)
+{
+    char buf[2048];
+    sprintf(buf, "[OptiX][%2d][%12s]: %s", (int)level, tag, message);
+    Falcor::logWarning(buf);
+}

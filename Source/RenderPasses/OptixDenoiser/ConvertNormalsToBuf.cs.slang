@@ -1,5 +1,5 @@
 /***************************************************************************
- # Copyright (c) 2020, NVIDIA CORPORATION. All rights reserved.
+ # Copyright (c) 2015-21, NVIDIA CORPORATION. All rights reserved.
  #
  # Redistribution and use in source and binary forms, with or without
  # modification, are permitted provided that the following conditions
@@ -25,14 +25,26 @@
  # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
  # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  **************************************************************************/
-#pragma once
+cbuffer GlobalCB
+{
+    uint gStride;
+    float4x4 gViewIT;
+}
 
-#define _LOG_ENABLED 1 // Set this to 0 to disable logging and most error checks
+Texture2D<float4>   gInTex;
+RWBuffer<float3>    gOutBuf;
 
-#define _PROFILING_ENABLED 1                // Set this to 1 to enable CPU/GPU profiling
-#define _PROFILING_LOG 0                    // Set this to 1 to dump profiling data while profiler is active.
-#define _PROFILING_LOG_BATCH_SIZE 1024 * 1  // This can be used to control how many samples are accumulated before they are dumped to file.
+[numthreads(8, 8, 1)]
+void main(uint3 thrdId : SV_DispatchThreadID)
+{
+    uint bufIdx = thrdId.x + thrdId.y * gStride;
 
-#define _ENABLE_NVAPI 1 // Set this to 1 to enable NVIDIA specific DX extensions. Make sure you have the NVAPI package in your 'Externals' directory. View the readme for more information.
-#define _ENABLE_CUDA 1 // Set this to 1 to enable CUDA use and CUDA/DX interoperation. Make sure you have the CUDA SDK package in your 'Externals' directory. View the readme for more information.
-#define _ENABLE_OPTIX 1 // Set this to 1 to enable OptiX. Make sure you have the OptiX SDK package in your 'Externals' directory. View the readme for more information.
+    float3 normal = (gInTex[thrdId.xy].xyz - 0.5f)*2.0f;
+    if (length(normal) > 0.01)
+    {
+        normal = mul(float4(normal, 0.0f), gViewIT).xyz;
+        normal = normalize(normal);
+    }
+
+    gOutBuf[bufIdx] = normal;
+}

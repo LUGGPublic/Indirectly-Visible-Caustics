@@ -5,6 +5,7 @@ loadRenderPassLibrary("DebugPasses.dll")
 loadRenderPassLibrary("ErrorMeasurePass.dll")
 loadRenderPassLibrary("GBuffer.dll")
 loadRenderPassLibrary("MegakernelPathTracer.dll")
+loadRenderPassLibrary("OptixDenoiser.dll")
 loadRenderPassLibrary("PixelInspectorPass.dll")
 loadRenderPassLibrary("ScreenSpaceCaustics.dll")
 loadRenderPassLibrary("SVGFPass.dll")
@@ -14,6 +15,7 @@ loadRenderPassLibrary("Utils.dll")
 class MyFilter(enum.Enum):
     Accumulation = 1
     SVGF         = 2
+    OptiX        = 3
 
 maxPathLength = 6
 maxBounceCount = maxPathLength - 1
@@ -73,6 +75,8 @@ optixConfig = {
 def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
     if myFilter == MyFilter.SVGF:
         filterStr = 'SVGF'
+    elif myFilter == MyFilter.OptiX:
+        filterStr = 'OptiX'
     else:
         filterStr = 'Accum'
     g = RenderGraph("Screen-space caustic rendering [{}{}]{}".format('Late ' if lateFiltering else '', filterStr,
@@ -90,6 +94,8 @@ def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
     g.addPass(createPass("ScreenSpaceCaustics", screenSpaceCTConfig), "ScreenSpaceCaustics")
     if myFilter == MyFilter.SVGF:
         g.addPass(createPass("SVGFPass", svgfConfig), "SSCR_SVGFPass")
+    elif myFilter == MyFilter.OptiX:
+        g.addPass(createPass("OptixDenoiser", optixConfig), "SSCR_OptixPass")
     else:
         g.addPass(createPass("AccumulatePass"), "SSCR_Accumulation")
     g.addPass(createPass("ToneMapper"), "SSCR_ToneMapping")
@@ -142,6 +148,16 @@ def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
         else:
             g.addEdge("ScreenSpaceCaustics.color", "SSCR_SVGFPass.Color")
             g.addEdge("SSCR_SVGFPass.Filtered image", "SSCR_ToneMapping.src")
+    elif myFilter == MyFilter.OptiX:
+        g.addEdge("GBuffer.diffuseOpacity", "SSCR_OptixPass.albedo")
+        g.addEdge("GBuffer.normW", "SSCR_OptixPass.normal")
+        g.addEdge("GBuffer.mvec", "SSCR_OptixPass.mvec")
+        if lateFiltering:
+            g.addEdge("ScreenSpaceCaustics.color", "SSCR_ToneMapping.src")
+            g.addEdge("SSCR_ToneMapping.dst", "SSCR_OptixPass.color")
+        else:
+            g.addEdge("ScreenSpaceCaustics.color", "SSCR_OptixPass.color")
+            g.addEdge("SSCR_OptixPass.output", "SSCR_ToneMapping.src")
     else:
         if lateFiltering:
             g.addEdge("ScreenSpaceCaustics.color", "SSCR_ToneMapping.src")
@@ -166,6 +182,8 @@ def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
 
         if myFilter == MyFilter.SVGF:
             g.addEdge("SSCR_SVGFPass.Filtered image", "ErrorMeasure.Source")
+        elif myFilter == MyFilter.OptiX:
+            g.addEdge("SSCR_OptixPass.output", "ErrorMeasure.Source")
         else:
             g.addEdge("SSCR_Accumulation.output", "ErrorMeasure.Source")
         g.addEdge("MPT_Accumulation.output", "ErrorMeasure.Reference")
@@ -219,6 +237,8 @@ def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
     else:
         if myFilter == MyFilter.SVGF:
             g.markOutput("SSCR_SVGFPass.Filtered image")
+        elif myFilter == MyFilter.OptiX:
+            g.markOutput("SSCR_OptixPass.output")
         else:
             g.markOutput("SSCR_Accumulation.output")
     if enableDebugTools:
@@ -227,6 +247,8 @@ def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
     if not lateFiltering:
         if myFilter == MyFilter.SVGF:
             g.markOutput("SSCR_SVGFPass.Filtered image")
+        elif myFilter == MyFilter.OptiX:
+            g.markOutput("SSCR_OptixPass.output")
         else:
             g.markOutput("SSCR_Accumulation.output")
     else:
@@ -244,6 +266,8 @@ def getSSCRGraph(myFilter, lateFiltering, enableDebugTools):
 def getPTGraph(myFilter, lateFiltering):
     if myFilter == MyFilter.SVGF:
         filterStr = 'SVGF'
+    elif myFilter == MyFilter.OptiX:
+        filterStr = 'OptiX'
     else:
         filterStr = 'Accum'
     g = RenderGraph("Path tracing [{}{}]".format('Late ' if lateFiltering else '', filterStr))
@@ -259,6 +283,8 @@ def getPTGraph(myFilter, lateFiltering):
     g.addPass(createPass("MegakernelPathTracer", megakernelPTConfig), "PathTracer")
     if myFilter == MyFilter.SVGF:
         g.addPass(createPass("SVGFPass", svgfConfig), "SVGFPass")
+    elif myFilter == MyFilter.OptiX:
+        g.addPass(createPass("OptixDenoiser", optixConfig), "OptixPass")
     else:
         g.addPass(createPass("AccumulatePass"), "Accumulation")
     g.addPass(createPass("ToneMapper"), "ToneMapping")
@@ -290,6 +316,16 @@ def getPTGraph(myFilter, lateFiltering):
         else:
             g.addEdge("PathTracer.color", "SVGFPass.Color")
             g.addEdge("SVGFPass.Filtered image", "ToneMapping.src")
+    elif myFilter == MyFilter.OptiX:
+        g.addEdge("GBuffer.diffuseOpacity", "OptixPass.albedo")
+        g.addEdge("GBuffer.normW", "OptixPass.normal")
+        g.addEdge("GBuffer.mvec", "OptixPass.mvec")
+        if lateFiltering:
+            g.addEdge("PathTracer.color", "ToneMapping.src")
+            g.addEdge("ToneMapping.dst", "OptixPass.color")
+        else:
+            g.addEdge("PathTracer.color", "OptixPass.color")
+            g.addEdge("OptixPass.output", "ToneMapping.src")
     else:
         if lateFiltering:
             g.addEdge("PathTracer.color", "ToneMapping.src")
@@ -306,6 +342,8 @@ def getPTGraph(myFilter, lateFiltering):
     else:
         if myFilter == MyFilter.SVGF:
             g.markOutput("SVGFPass.Filtered image")
+        elif myFilter == MyFilter.OptiX:
+            g.markOutput("OptixPass.output")
         else:
             g.markOutput("Accumulation.output")
 
@@ -314,6 +352,8 @@ def getPTGraph(myFilter, lateFiltering):
     if not lateFiltering:
         if myFilter == MyFilter.SVGF:
             g.markOutput("SVGFPass.Filtered image")
+        elif myFilter == MyFilter.OptiX:
+            g.markOutput("OptixPass.output")
         else:
             g.markOutput("Accumulation.output")
     else:
@@ -334,8 +374,14 @@ except NameError: None
 # Debug
 try: m.addGraph(getSSCRGraph(MyFilter.Accumulation, False, True))
 except NameError: None
+## Using Late OptiX
+#try: m.addGraph(getSSCRGraph(MyFilter.OptiX, True, False))
+#except NameError: None
 ## Using Early SVGF
 #try: m.addGraph(getSSCRGraph(MyFilter.SVGF, False, False))
+#except NameError: None
+## Using Early OptiX
+#try: m.addGraph(getSSCRGraph(MyFilter.OptiX, False, False))
 #except NameError: None
 
 m.clock.stop()

@@ -36,6 +36,12 @@ If you want to use CUDA C/C++ code as part of a Falcor project, then refer to th
 If you want to execute Slang-based shader code through CUDA using `CUDAProgram`, then you will need to copy or link the root directory of the CUDA SDK under `Source/Externals/.packman/`, as a directory named `CUDA`.
 Then, set `_ENABLE_CUDA` to `true` in `Source/Falcor/Core/FalcorConfig.h`
 
+## OptiX Support
+If you want to use Falcor's OptiX functionality (specifically the `OptiXDenoiser` render pass), then refer to the README location in `Source/Samples/OptixDenoiser` for instructions on setting up your environment to use OptiX with Falcor.
+
+In particular, you will need to copy or link the root directory of the OptiX SDK under `Source/Externals/`, as a directory named `optix` (i.e., `Source/Externals/optix/include/optix.h` should exist).
+Then, set `_ENABLE_OPTIX` to `1` in `Source/Falcor/Core/FalcorConfig.h`
+
 ## Falcor Configuration
 `FalcorConfig.h` contains some flags which control Falcor's behavior.
 - `_LOG_ENABLED` - Enable/disable log messages. By default, it is set to `true`.
