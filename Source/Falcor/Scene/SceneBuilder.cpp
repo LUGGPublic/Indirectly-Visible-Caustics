@@ -681,6 +681,11 @@ namespace Falcor
         mpMaterialTextureLoader->loadTexture(pMaterial, slot, filename);
     }
 
+    void SceneBuilder::waitForMaterialTextureLoading()
+    {
+        mpMaterialTextureLoader.reset();
+    }
+
     // Volumes
 
     Volume::SharedPtr SceneBuilder::getVolume(const std::string& name) const
@@ -2031,6 +2036,7 @@ namespace Falcor
         sceneBuilder.def("addMaterial", &SceneBuilder::addMaterial, "material"_a);
         sceneBuilder.def("getMaterial", &SceneBuilder::getMaterial, "name"_a);
         sceneBuilder.def("loadMaterialTexture", &SceneBuilder::loadMaterialTexture, "material"_a, "slot"_a, "filename"_a);
+        sceneBuilder.def("waitForMaterialTextureLoading", &SceneBuilder::waitForMaterialTextureLoading);
         sceneBuilder.def("addVolume", &SceneBuilder::addVolume, "volume"_a);
         sceneBuilder.def("getVolume", &SceneBuilder::getVolume, "name"_a);
         sceneBuilder.def("addLight", &SceneBuilder::addLight, "light"_a);

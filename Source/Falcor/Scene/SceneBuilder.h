@@ -375,6 +375,10 @@ namespace Falcor
         */
         void loadMaterialTexture(const Material::SharedPtr& pMaterial, Material::TextureSlot slot, const std::string& filename);
 
+        /** Wait until all material textures are loaded.
+        */
+        void waitForMaterialTextureLoading();
+
         // Volumes
 
         /** Get the list of volumes.
