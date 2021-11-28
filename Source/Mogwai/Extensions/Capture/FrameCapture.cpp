@@ -69,6 +69,9 @@ namespace Mogwai
             w.checkbox("Capture All Outputs", mCaptureAllOutputs);
             w.tooltip("Capture all available outputs instead of the marked ones only.");
 
+            w.checkbox("Export Alpha", mExportAlpha);
+            w.tooltip("Export the alpha channel along the other ones.");
+
             if (w.button("Capture Current Frame")) capture();
         }
     }
@@ -138,7 +141,7 @@ namespace Mogwai
             auto ext = Bitmap::getFileExtFromResourceFormat(pTex->getFormat());
             auto format = Bitmap::getFormatFromFileExtension(ext);
             std::string filename = getOutputNamePrefix(pGraph->getOutputName(i)) + std::to_string(gpFramework->getGlobalClock().getFrame()) + "." + ext;
-            pTex->captureToFile(0, 0, filename, format);
+            pTex->captureToFile(0, 0, filename, format, mExportAlpha ? Bitmap::ExportFlags::ExportAlpha : Bitmap::ExportFlags::None);
         }
 
         if (mCaptureAllOutputs && !unmarkedOutputs.empty())

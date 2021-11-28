@@ -49,5 +49,6 @@ namespace Mogwai
         std::string graphFramesStr(const RenderGraph* pGraph);
 
         bool mCaptureAllOutputs = false;
+        bool mExportAlpha = false;
     };
 }
