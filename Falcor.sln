@@ -86,6 +86,8 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "WhittedRayTracer", "Source\
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "SceneDebugger", "Source\RenderPasses\SceneDebugger\SceneDebugger.vcxproj", "{B1715F7A-6EFD-4910-B271-7423AB6961CB}"
 EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "ScreenSpaceCaustics", "Source\RenderPasses\ScreenSpaceCaustics\ScreenSpaceCaustics.vcxproj", "{4C1E725A-4BE5-4058-8349-043693A274B4}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		DebugD3D12|x64 = DebugD3D12|x64
@@ -220,6 +222,10 @@ Global
 		{B1715F7A-6EFD-4910-B271-7423AB6961CB}.DebugD3D12|x64.Build.0 = Debug|x64
 		{B1715F7A-6EFD-4910-B271-7423AB6961CB}.ReleaseD3D12|x64.ActiveCfg = Release|x64
 		{B1715F7A-6EFD-4910-B271-7423AB6961CB}.ReleaseD3D12|x64.Build.0 = Release|x64
+		{4C1E725A-4BE5-4058-8349-043693A274B4}.DebugD3D12|x64.ActiveCfg = Debug|x64
+		{4C1E725A-4BE5-4058-8349-043693A274B4}.DebugD3D12|x64.Build.0 = Debug|x64
+		{4C1E725A-4BE5-4058-8349-043693A274B4}.ReleaseD3D12|x64.ActiveCfg = Release|x64
+		{4C1E725A-4BE5-4058-8349-043693A274B4}.ReleaseD3D12|x64.Build.0 = Release|x64
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -256,6 +262,7 @@ Global
 		{873F13CA-A9C7-47BA-857D-8848C5E7F07E} = {D16038A7-B031-4181-B4A1-2C416C02330C}
 		{431C3127-E613-424C-B964-FB53DAA87789} = {D16038A7-B031-4181-B4A1-2C416C02330C}
 		{B1715F7A-6EFD-4910-B271-7423AB6961CB} = {D16038A7-B031-4181-B4A1-2C416C02330C}
+		{4C1E725A-4BE5-4058-8349-043693A274B4} = {D16038A7-B031-4181-B4A1-2C416C02330C}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {357B2AE0-FE30-4AC6-8D41-B580232BC0DE}

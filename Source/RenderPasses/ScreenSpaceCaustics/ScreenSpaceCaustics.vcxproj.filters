@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="ScreenSpaceCaustics.cpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="ScreenSpaceCaustics.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <ShaderSource Include="ScreenSpaceCaustics.rt.slang" />
+    <ShaderSource Include="ScreenSpaceCausticsParams.slang" />
+    <ShaderSource Include="BufferToTextureCopy.cs.slang" />
+    <ShaderSource Include="ProjectionLightSampling.slang" />
+    <ShaderSource Include="LightSampling.slang" />
+    <ShaderSource Include="SharedSampling.slang" />
+    <ShaderSource Include="PathTracing.rt.slang" />
+    <ShaderSource Include="ScreenSpaceCausticsHelper.slang" />
+    <ShaderSource Include="DownloadDebugData.cs.slang" />
+    <ShaderSource Include="DebugVisualiser.cs.slang" />
+    <ShaderSource Include="CollectionPointReuse.rt.slang" />
+    <ShaderSource Include="ApplyBSDF.rt.slang" />
+    <ShaderSource Include="GenerateAABBs.rt.slang" />
+    <ShaderSource Include="RestrictActiveEmissiveTriangles.cs.slang" />
+  </ItemGroup>
+</Project>
