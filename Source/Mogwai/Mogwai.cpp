@@ -70,6 +70,7 @@ namespace Mogwai
     {
         resetEditor();
         gpDevice->flushAndSync(); // Need to do that because clearing the graphs will try to release some state objects which might be in use
+        gpDevice->getApiHandle()->SetStablePowerState(false);
         mGraphs.clear();
     }
 
@@ -94,6 +95,7 @@ namespace Mogwai
         }
 
         Scene::nullTracePass(pRenderContext, uint2(1024));
+        gpDevice->getApiHandle()->SetStablePowerState(true);
     }
 
     RenderGraph* Renderer::getActiveGraph() const
