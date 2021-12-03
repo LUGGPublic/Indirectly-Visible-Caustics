@@ -1,3 +1,13 @@
+# Real-Time Rendering of Indirectly Visible Caustics
+
+[This repository](https://github.com/LUGGPublic/Indirectly-Visible-Caustics) contains the source code for the paper _Real-Time Rendering of Indirectly Visible Caustics_ to be published at [GRAPP 2022](https://grapp.scitevents.org/Home.aspx/?y=2022).
+
+The code is based on [Falcor](https://github.com/NVIDIAGameWorks/Falcor) 4.3, and adds a few bug fixes and utilities as well as a new render pass called `ScreenSpaceCaustics` which implements both [_Caustics Using Screen-Space Photon Mapping_, H. Kim (2019)](https://link.springer.com/chapter/10.1007/978-1-4842-4427-2_30) as well as our approach described in the previously-mentioned paper.
+The script _Source/Mogwai/Data/ScreenSpaceCausticRenderer.py_ will set up an appropiate render graph using our technique.
+
+The pre-requisites and installation instructions listed below are applicable to this project. Note that NVAPI, CUDA, and OptiX are all used and enabled by the project.
+
+
 # Falcor 4.3
 
 Falcor is a real-time rendering framework supporting DirectX 12. It aims to improve productivity of research and prototype projects.
